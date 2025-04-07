@@ -2,18 +2,15 @@
  * @file id3_reader.c
  * @brief Implementation of functions for reading ID3 tags from MP3 files.
  */
-#include "id3_reader.h"
-#include "error_handling.h"
 #include "id3_utils.h"
-
-//Size of the ID3 tag (excluding the ID3 header, but includes extended header and padding)
-unsigned int tag_size; 
+#include "id3_reader.h"
+#include "error_handling.h" 
 
 /**
  * @brief Reads the ID3 tags from the MP3 file
  * @return HeaderData Structure
  */
-HeaderData *read_id3_header(FILE *file){
+HeaderData *read_id3_header(FILE *file, unsigned int *tag_size){
     HeaderData *header_data = create_header_data();
     //skip the ID3 tag identifier from header
     fseek(file, 3, SEEK_SET);
@@ -25,7 +22,7 @@ HeaderData *read_id3_header(FILE *file){
     fread(header_data->size, 4, 1, file);
 
     //get the actual integer value of the size
-    tag_size = decode_syncsafe(header_data->size);
+    *tag_size = decode_syncsafe(header_data->size);
 
     return header_data;
 }
@@ -34,20 +31,20 @@ HeaderData *read_id3_header(FILE *file){
  * @brief Reads the ID3 tags from the MP3 file
  * @return TagData Structure
  */
-TagData *read_id3_tag(FILE *file){
+TagData *read_id3_tag(FILE *file, unsigned int *tag_size){
     TagData *data = create_tag_data();
 
-    printf("Tag size (excluding header): %u bytes\n", tag_size);
+    printf("Tag size (excluding header): %u bytes\n", *tag_size);
 
     //To determine how many ID3 frames are there
-    unsigned int remaining_frames = tag_size;
+    unsigned int remaining_frames = *tag_size;
 
     // Loop through each frame to extract tag names and content
     // A frame header is 10 bytes, so ensure at least 10 bytes remain before reading the next frame
     // This prevents reading into padding, past the end of the tag, or into incomplete/corrupted tag
-    while(remaining_frames > 10){ 
-        unsigned char frame_header[10];
-        if(fread(frame_header, 10, 1, file) != 1){
+    while(remaining_frames > FRAME_HEADER_SIZE){ 
+        unsigned char frame_header[FRAME_HEADER_SIZE];
+        if(fread(frame_header, FRAME_HEADER_SIZE, 1, file) != 1){
             display_error("Unexpected end of file or read error while reading frame header.\n");
             break;
         }
@@ -71,14 +68,11 @@ TagData *read_id3_tag(FILE *file){
             }
         }
 
-        //The next 4 bytes of frame header contain the frame content size, which is in big endian
-        unsigned int frame_size = (frame_header[4] << 24) |
-                              (frame_header[5] << 16) |
-                              (frame_header[6] << 8)  |
-                               frame_header[7];
+        //The next 4 bytes of frame header contain the frame content size, which is in big endian format(as per ID3v2.3 spec)
+        unsigned int frame_size = (frame_header[4] << 24) | (frame_header[5] << 16) | (frame_header[6] << 8)  | frame_header[7];
 
         // Validate frame size against remaining bytes
-        if (frame_size > (remaining_frames - 10)) {
+        if (frame_size > (remaining_frames - FRAME_HEADER_SIZE)) {
             display_error("Frame size exceeds remaining tag size. Aborting.\n");
             break;
         }
@@ -124,6 +118,15 @@ TagData *read_id3_tag(FILE *file){
             
             strcpy(data->album, content);
         }
+        else if(strcmp(frame_id, "TRCK") == 0){
+            data->track = (char *)calloc(1, strlen(content));
+            if(!data->track){
+                perror("Memory allocation failed");
+                return NULL;
+            }
+            
+            strcpy(data->track, content);
+        }
         else if(strcmp(frame_id, "TYER") == 0){
             data->year = (char *)calloc(1, strlen(content));
             if(!data->year){
@@ -151,12 +154,12 @@ TagData *read_id3_tag(FILE *file){
             
             strcpy(data->comment, content);
         }
-        else if(strcmp(frame_id, "APIC") == 0){
-            printf("%s\n", content);
-        }
+        // else if(strcmp(frame_id, "APIC") == 0){
+        //     printf("%s\n", content);
+        // }
 
         // Deduct total size of frame (header + content)
-        remaining_frames = remaining_frames - (frame_size + 10);
+        remaining_frames = remaining_frames - (frame_size + FRAME_HEADER_SIZE);
 
         free(content);
         content = NULL;
@@ -173,6 +176,7 @@ void display_metadata(const HeaderData *header_data, const TagData *data) {
     printf("Title: %s\n", data->title);
     printf("Artist: %s\n", data->artist);
     printf("Album: %s\n", data->album);
+    printf("Track Number: %s\n", data->track);
     printf("Year: %s\n", data->year);
     printf("Genre: %s\n", data->genre);
     printf("Comment: %s\n", data->comment);
@@ -188,12 +192,15 @@ void view_tags(const char *filename){
         return;
     }
 
-    HeaderData *header_data = read_id3_header(file);
+    //Size of the ID3 tag (excluding the ID3 header, but includes extended header and padding)
+    unsigned int tag_size = 0;
+
+    HeaderData *header_data = read_id3_header(file, &tag_size);
     if (!header_data) {
         display_error("Failed to read ID3 header.");
         return;
     }
-    TagData *data = read_id3_tag(file);
+    TagData *data = read_id3_tag(file, &tag_size);
     if (!data) {
         display_error("Failed to read ID3 frame.");
         return;

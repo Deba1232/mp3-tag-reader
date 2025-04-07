@@ -7,12 +7,12 @@
 /**
 TODO: Add documention as sample given
  */
-HeaderData *read_id3_header(FILE *);
+HeaderData *read_id3_header(FILE *, unsigned int *);
 
 /**
 TODO: Add documention as sample given
  */
-TagData *read_id3_tag(FILE *);
+TagData *read_id3_tag(FILE *, unsigned int *);
 
 /**
 TODO: Add documention as sample given 
