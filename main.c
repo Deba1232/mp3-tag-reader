@@ -1,7 +1,3 @@
-/**
- * @file main.c
- * @brief Main entry point for the MP3 Tag Reader application.
- */
 #include "main.h"
 #include "id3_reader.h"
 #include "id3_writer.h"
@@ -12,10 +8,10 @@
  */
 void display_help() {
     printf("Usage: ./mp3tag [OPTION] filename.mp3\n");
-    printf("       ./mp3tag -e [TAGOPTION] <value> filename\n");
+    printf("       ./mp3tag -e [EDITOPTION] <value> filename\n");
     printf("Options:\n");
     printf("  -v               View song info\n");
-    printf("  -h, --help              Display this help\n");
+    printf("  -h, --help       Display this help\n");
     printf("  -e               Edit tags\n");
     printf("Edit Tag Options:\n");
     printf("      -t           Modifies Title tag\n      -T           Modifies Track tag\n      -a           Modifies Artist tag\n      -A           Modifies Album tag\n      -y           Modifies Year tag\n      -c           Modifies Comment tag\n      -g           Modifies Genre tag\n");
@@ -51,16 +47,17 @@ int main(int argc, char *argv[]){
                 display_error("Please provide an MP3 file.");
             }
         } 
-        // else if (strcmp(argv[1], "-e") == 0 && argc == 5) {
-        //     char *tag = argv[2];
-        //     char *filename = argv[3];
-        //     char *value = argv[4];
-        //     if (edit_tag(filename, tag, value) != 0) {
-        //         // display_error("Failed to edit tag.");
-        //         return 1;
-        //     }
-        //     printf("Tag edited successfully.\n");
-        // } 
+        else if (strcmp(argv[1], "-e") == 0 && (strcmp(argv[2], "-t") == 0 || strcmp(argv[2], "-T") == 0 || strcmp(argv[2], "-a") == 0 || strcmp(argv[2], "-A") == 0 || strcmp(argv[2], "-y") == 0 || strcmp(argv[2], "-c") == 0 || strcmp(argv[2], "-g") == 0) && argc == 5) {
+            char *tag = argv[2];
+            char *value = argv[3];
+            char *filename = argv[4];
+
+            if (edit_tag(filename, tag, value) != 0) {
+                display_error("Failed to edit tag.");
+                return 1;
+            }
+            printf("Tag edited successfully.\n");
+        } 
         else {
             display_help();
         }
