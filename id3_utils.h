@@ -4,10 +4,17 @@
 #include "main.h"
 
 /**
+ * @brief Structure to hold ID3 header data.
+ */
+typedef struct {
+    char *size; /**< Size of the ID3 tag(excluding the ID3 header) */
+    char *version; /**< Version of the ID3 tag */
+} HeaderData;
+
+/**
  * @brief Structure to hold ID3 tag data.
  */
 typedef struct {
-    char *version; /**< Version of the ID3 tag */
     char *title;   /**< Title of the song */
     char *artist;  /**< Artist of the song */
     char *album;   /**< Album name */
@@ -16,6 +23,30 @@ typedef struct {
     char *genre;   /**< Genre */
     // Add other fields as needed
 } TagData;
+
+/**
+ * @brief Decodes a sync-safe integer used in ID3 tags.
+ *
+ * In ID3 metadata (e.g., in MP3 files), size fields are stored using a sync-safe format.
+ * This means each byte uses only 7 bits, and the most significant bit (MSB) is always 0.
+ *
+ * MP3 files use synchronization signals (typically a series of 1s like 0xFF) to mark the start
+ * of audio frames. A regular 32-bit integer might accidentally contain such patterns, which
+ * could confuse MP3 players into misinterpreting metadata as audio data. By ensuring the MSB
+ * of each byte is 0, sync-safe encoding prevents false frame syncs.
+ *
+ * This function decodes a 28-bit sync-safe integer (stored across 4 bytes) into a normal integer.
+ *
+ * @return Decoded 32-bit integer value from sync-safe format.
+ */
+unsigned int decode_syncsafe(unsigned char[]);
+
+/**
+ * @brief Creates a new HeaderData structure.
+ * 
+ * @return Pointer to the newly created HeaderData structure.
+ */
+HeaderData *create_header_data();
 
 /**
  * @brief Creates a new TagData structure.
@@ -27,6 +58,11 @@ TagData *create_tag_data();
 /**
 TODO: Add documention as sample given above
  */
-void free_tag_data(TagData *data);
+void free_header_data(HeaderData *);
 
-#endif // ID3_UTILS_H
+/**
+TODO: Add documention as sample given above
+ */
+void free_tag_data(TagData *);
+
+#endif

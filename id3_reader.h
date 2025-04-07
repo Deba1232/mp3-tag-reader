@@ -7,16 +7,21 @@
 /**
 TODO: Add documention as sample given
  */
-TagData* read_id3_tags(const char *filename);
-
-/**
-TODO: Add documention as sample given 
- */
-void display_metadata(const TagData *data);
+HeaderData *read_id3_header(FILE *);
 
 /**
 TODO: Add documention as sample given
  */
-void view_tags(const char *filename);
+TagData *read_id3_tag(FILE *);
+
+/**
+TODO: Add documention as sample given 
+ */
+void display_metadata(const HeaderData *, const TagData *);
+
+/**
+TODO: Add documention as sample given
+ */
+void view_tags(const char *);
 
 #endif // ID3_READER_H
