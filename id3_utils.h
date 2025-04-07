@@ -3,6 +3,9 @@
 
 #include "main.h"
 
+#define TAG_HEADER_SIZE 10
+#define FRAME_HEADER_SIZE 10
+
 /**
  * @brief Structure to hold ID3 header data.
  */
@@ -18,6 +21,7 @@ typedef struct {
     char *title;   /**< Title of the song */
     char *artist;  /**< Artist of the song */
     char *album;   /**< Album name */
+    char *track;   /**< Track number or position in the album */
     char *year;    /**< Year of release */
     char *comment; /**< Comment */
     char *genre;   /**< Genre */
@@ -40,6 +44,11 @@ typedef struct {
  * @return Decoded 32-bit integer value from sync-safe format.
  */
 unsigned int decode_syncsafe(unsigned char[]);
+
+/**
+ * @brief Encodes an integer into sync-safe format used in ID3 tag size.
+ */
+void encode_syncsafe(unsigned int, unsigned char *);
 
 /**
  * @brief Creates a new HeaderData structure.

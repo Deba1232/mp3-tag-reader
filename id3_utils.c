@@ -20,6 +20,16 @@ unsigned int decode_syncsafe(unsigned char bytes[4]){
 }
 
 /**
+ * @brief Encodes an integer into sync-safe format used in ID3 tag size.
+ */
+void encode_syncsafe(unsigned int value, unsigned char *output){
+    output[0] = (value >> 21) & 0x7f;
+    output[1] = (value >> 14) & 0x7f;
+    output[2] = (value >> 7) & 0x7f;
+    output[3] = value & 0x7f;
+}
+
+/**
  * @brief Initializes each field to be displayed for the MP3 file
  * @return Pointer to the TagData structure 
  */
@@ -50,10 +60,10 @@ TagData* create_tag_data() {
         data->title = NULL;
         data->artist = NULL;
         data->album = NULL;
+        data->track = NULL;
         data->year = NULL;
         data->comment = NULL;
         data->genre = NULL;
-        // Initialize other fields as needed
     }
     return data;
 }
