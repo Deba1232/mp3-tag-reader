@@ -23,6 +23,22 @@ void copy_tag_header(FILE *, FILE *, unsigned char *);
 unsigned int copy_tag_frames(FILE *, FILE *, const unsigned int *, const char *, const TagData *);
 
 /**
+ * @brief Copies the remaining audio data.
+ * 
+ * @param FilePointer1 Pointer to the original MP3 file structure.
+ * @param FilePointer2 Pointer to the temporary file structure.
+ */
+void copy_remaining_data(FILE *, FILE *);
+
+/**
+ * @brief Copies the whole data from temporary file to original MP3 file.
+ * 
+ * @param FileName1 Filename of the original MP3 file.
+ * @param FileName12 Filename of the temporary file.
+ */
+void copy_to_original_file(const char *, const char *);
+
+/**
  * @brief Writes the ID3 tag to an MP3 file.
  * 
  * @param filename The name of the MP3 file.

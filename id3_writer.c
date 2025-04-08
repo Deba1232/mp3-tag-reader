@@ -118,7 +118,44 @@ unsigned int copy_tag_frames(FILE *original_file, FILE *tmp_file, const unsigned
     // Skipping the padding data (if any) here as it'll be handled in write_id3_tag function
     fseek(original_file, remaining_frames, SEEK_CUR);
 
+
     return total_written_frame_size;
+}
+
+void copy_remaining_data(FILE *original_file, FILE *tmp_file){
+    unsigned char remaining_data_buf[BUFSIZ];
+    size_t bytes;
+
+    while(bytes = (fread(remaining_data_buf, sizeof(remaining_data_buf), 1,original_file)) > 0){
+        fwrite(remaining_data_buf, sizeof(remaining_data_buf), 1, tmp_file);
+    }
+}
+
+void copy_to_original_file(const char *original_filename, const char *tmp_filename){
+    FILE *original_file = fopen(original_filename, "wb");
+    if(!original_file){
+        perror("Failed to open file");
+        return;
+    }
+
+    FILE *tmp_file = fopen(tmp_filename, "rb");
+    if(!tmp_file){
+        perror("Failed to open file");
+        return;
+    }
+
+    unsigned char tmp_data_buf[BUFSIZ];
+    size_t bytes;
+
+    while((bytes = fread(tmp_data_buf, sizeof(tmp_data_buf), 1, tmp_file)) > 0){
+        fwrite(tmp_data_buf, sizeof(tmp_data_buf), 1, original_file);
+    }
+
+    fclose(original_file);
+    fclose(tmp_file);
+    
+    // Remove the temp file
+    remove(tmp_filename);
 }
 
 int write_id3_tag(const char *filename, const TagData *data, const unsigned int *tag_size, const char *option) {
@@ -147,6 +184,7 @@ int write_id3_tag(const char *filename, const TagData *data, const unsigned int 
     unsigned char tag_header[TAG_HEADER_SIZE] = {0};
     // Copy the tag header from original to temporary file and keep a copy in tag_header
     copy_tag_header(original_file, tmp_file, tag_header);
+
     unsigned int frames_written = copy_tag_frames(original_file, tmp_file, tag_size, option, data);
 
     // Adjust padding or header size depending on edited frame size
@@ -166,18 +204,24 @@ int write_id3_tag(const char *filename, const TagData *data, const unsigned int 
     }
     else if (frames_written > *tag_size) {
         // Case 2: New total frame size exceeds original tag size after edit, update header with new tag size
+        // In this case, no explicit padding is written because the new tag size exceeds the original tag size, which means there’s no extra room to pad, and the tag grows.
 
         // Update the tag size in the header using synchsafe integer format
         encode_syncsafe(frames_written, &tag_header[6]); // Encode into header bytes 6-9
         // Rewind the temp file to the beginning to overwrite the old header with the updated size
         rewind(tmp_file);
         fwrite(tag_header, TAG_HEADER_SIZE, 1, tmp_file); 
+
+        // Skip the whole header and frame section to the beginning of the audio part
+        fseek(original_file, FRAME_HEADER_SIZE + *tag_size, SEEK_SET);
     }
 
-    copy_remaining_data();
+    copy_remaining_data(original_file, tmp_file);
 
     fclose(original_file);
     fclose(tmp_file);
+
+    copy_to_original_file(filename, "tmp.mp3");
 
     return 0;
 }
