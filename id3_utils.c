@@ -64,12 +64,13 @@ TagData* create_tag_data() {
         data->year = NULL;
         data->comment = NULL;
         data->genre = NULL;
+        data->album_art = NULL;
     }
     return data;
 }
 
 /**
-TODO: Add documention as sample given
+ * @brief Frees the dynamically allocated memory for header data variables
  */
 void free_header_data(HeaderData *header_data) {
     if (header_data) {
@@ -80,7 +81,7 @@ void free_header_data(HeaderData *header_data) {
 }
 
 /**
-TODO: Add documention as sample given
+ * @brief Frees the dynamically allocated memory for tag data variables
  */
 void free_tag_data(TagData *data) {
     if (data) {

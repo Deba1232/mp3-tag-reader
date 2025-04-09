@@ -25,7 +25,7 @@ typedef struct {
     char *year;    /**< Year of release */
     char *comment; /**< Comment */
     char *genre;   /**< Genre */
-    // Add other fields as needed
+    char *album_art;  /**< Album art data */   
 } TagData;
 
 /**
@@ -65,12 +65,12 @@ HeaderData *create_header_data();
 TagData *create_tag_data();
 
 /**
-TODO: Add documention as sample given above
+ * @brief Frees the dynamically allocated memory for header data variables
  */
 void free_header_data(HeaderData *);
 
 /**
-TODO: Add documention as sample given above
+ * @brief Frees the dynamically allocated memory for tag data variables
  */
 void free_tag_data(TagData *);
 
