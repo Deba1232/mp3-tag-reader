@@ -113,11 +113,8 @@ unsigned int copy_tag_frames(FILE *original_file, FILE *tmp_file, const unsigned
         remaining_frames = remaining_frames - (original_frame_size + FRAME_HEADER_SIZE);
     }
 
-    printf("original padding: %d\n", remaining_frames);
-
     // Skipping the padding data (if any) here as it'll be handled in write_id3_tag function
     fseek(original_file, remaining_frames, SEEK_CUR);
-
 
     return total_written_frame_size;
 }
@@ -159,14 +156,6 @@ void copy_to_original_file(const char *original_filename, const char *tmp_filena
 }
 
 int write_id3_tag(const char *filename, const TagData *data, const unsigned int *tag_size, const char *option) {
-    printf("Title: %s\n", data->title);
-    printf("Artist: %s\n", data->artist);
-    printf("Album: %s\n", data->album);
-    printf("Track Number: %s\n", data->track);
-    printf("Year: %s\n", data->year);
-    printf("Genre: %s\n", data->genre);
-    printf("Comment: %s\n", data->comment);
-
     FILE *original_file = fopen(filename, "rb");
     if(!original_file){
         perror("Failed to open file");
@@ -191,7 +180,6 @@ int write_id3_tag(const char *filename, const TagData *data, const unsigned int 
     if(frames_written < *tag_size){
         // Case 1: New total frame size is smaller than original tag size after edit, keep padding the same size as original
         unsigned int padding_size = *tag_size - frames_written;
-        printf("new padding: %d\n", padding_size);
 
         char *padding_buf = (char *)calloc(1, padding_size);
         if(!padding_buf){
@@ -235,6 +223,8 @@ int edit_tag(const char *filename, const char *option, const char *value) {
 
     //Size of the ID3 tag (excluding the ID3 header, but includes extended header and padding)
     unsigned int tag_size = 0;
+
+    char *option_string;
     
     read_id3_header(file, &tag_size);
     TagData *data = read_id3_tag(file, &tag_size);
@@ -244,27 +234,41 @@ int edit_tag(const char *filename, const char *option, const char *value) {
 
     if(strcmp(option, "-t") == 0){
         strcpy(data->title, value);
+        option_string = "Title";
     }
     else if(strcmp(option, "-T") == 0){
         strcpy(data->track, value);
+        option_string = "Track";
     }
     else if(strcmp(option, "-a") == 0){
         strcpy(data->artist, value);
+        option_string = "Artist";
     }
     else if(strcmp(option, "-A") == 0){
         strcpy(data->album, value);
+        option_string = "Album";
     }
     else if(strcmp(option, "-y") == 0){
         strcpy(data->year, value);
+        option_string = "Year";
     }
     else if(strcmp(option, "-c") == 0){
         strcpy(data->comment, value);
+        option_string = "Comment";
     }
     else if(strcmp(option, "-g") == 0){
         strcpy(data->genre, value);
+        option_string = "Genre";
     }
     
     write_id3_tag(filename, data, &tag_size, option);
+
+    printf("--------------- Select Edit Option ------------------------\n");
+
+    printf("------------- Selected \"%s\" change option ------------------\n", option_string);
+    printf("%s\t:\t%s\n", option_string, value);
+
+    printf("------------- %s changed successfully ------------------\n", option_string);
 
     fclose(file);
 
