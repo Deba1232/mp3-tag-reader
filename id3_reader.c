@@ -4,6 +4,7 @@
  */
 #include "id3_utils.h"
 #include "id3_reader.h"
+#include "album_art.h"
 #include "error_handling.h" 
 
 /**
@@ -33,8 +34,6 @@ HeaderData *read_id3_header(FILE *file, unsigned int *tag_size){
  */
 TagData *read_id3_tag(FILE *file, unsigned int *tag_size){
     TagData *data = create_tag_data();
-
-    printf("Tag size (excluding header): %u bytes\n", *tag_size);
 
     //To determine how many ID3 frames are there
     unsigned int remaining_frames = *tag_size;
@@ -77,86 +76,86 @@ TagData *read_id3_tag(FILE *file, unsigned int *tag_size){
             break;
         }
 
-        //Skipping the text encoding byte(which is the first byte) in the frame content
-        fseek(file, 1, SEEK_CUR);
-
         char *content = (char *)calloc(1, frame_size);
-        if (content == NULL) {
+        if (!content) {
             perror("Memory allocation failed");
             return NULL;
         }
 
-        fread(content, frame_size - 1, 1, file);
-        content[frame_size - 1] = '\0';
+        if(strcmp(frame_id, "APIC") == 0){
+            extract_album_art(file, frame_size);
+        }
+        else{
+            //Skipping the text encoding byte(which is the first byte) in the frame content
+            fseek(file, 1, SEEK_CUR);
 
-        // printf("Frame ID: %s, Size: %u bytes, Content: %s\n", frame_id, frame_size, content);
+            fread(content, frame_size - 1, 1, file);
+            content[frame_size - 1] = '\0';
 
-        if(strcmp(frame_id, "TIT2") == 0){
-            data->title = (char *)calloc(1, strlen(content));
-            if(!data->title){
-                perror("Memory allocation failed");
-                return NULL;
+            if(strcmp(frame_id, "TIT2") == 0){
+                data->title = (char *)calloc(1, strlen(content));
+                if(!data->title){
+                    perror("Memory allocation failed");
+                    return NULL;
+                }
+    
+                strcpy(data->title, content);
             }
-
-            strcpy(data->title, content);
-        }
-        else if(strcmp(frame_id, "TPE1") == 0){
-            data->artist = (char *)calloc(1, strlen(content));
-            if(!data->artist){
-                perror("Memory allocation failed");
-                return NULL;
+            else if(strcmp(frame_id, "TPE1") == 0){
+                data->artist = (char *)calloc(1, strlen(content));
+                if(!data->artist){
+                    perror("Memory allocation failed");
+                    return NULL;
+                }
+                
+                strcpy(data->artist, content);
             }
-            
-            strcpy(data->artist, content);
-        }
-        else if(strcmp(frame_id, "TALB") == 0){
-            data->album = (char *)calloc(1, strlen(content));
-            if(!data->album){
-                perror("Memory allocation failed");
-                return NULL;
+            else if(strcmp(frame_id, "TALB") == 0){
+                data->album = (char *)calloc(1, strlen(content));
+                if(!data->album){
+                    perror("Memory allocation failed");
+                    return NULL;
+                }
+                
+                strcpy(data->album, content);
             }
-            
-            strcpy(data->album, content);
-        }
-        else if(strcmp(frame_id, "TRCK") == 0){
-            data->track = (char *)calloc(1, strlen(content));
-            if(!data->track){
-                perror("Memory allocation failed");
-                return NULL;
+            else if(strcmp(frame_id, "TRCK") == 0){
+                data->track = (char *)calloc(1, strlen(content));
+                if(!data->track){
+                    perror("Memory allocation failed");
+                    return NULL;
+                }
+                
+                strcpy(data->track, content);
             }
-            
-            strcpy(data->track, content);
-        }
-        else if(strcmp(frame_id, "TYER") == 0){
-            data->year = (char *)calloc(1, strlen(content));
-            if(!data->year){
-                perror("Memory allocation failed");
-                return NULL;
+            else if(strcmp(frame_id, "TYER") == 0){
+                data->year = (char *)calloc(1, strlen(content));
+                if(!data->year){
+                    perror("Memory allocation failed");
+                    return NULL;
+                }
+                
+                strcpy(data->year, content);
             }
-            
-            strcpy(data->year, content);
-        }
-        else if(strcmp(frame_id, "TCON") == 0){
-            data->genre = (char *)calloc(1, strlen(content));
-            if(!data->genre){
-                perror("Memory allocation failed");
-                return NULL;
+            else if(strcmp(frame_id, "TCON") == 0){
+                data->genre = (char *)calloc(1, strlen(content));
+                if(!data->genre){
+                    perror("Memory allocation failed");
+                    return NULL;
+                }
+                
+                strcpy(data->genre, content);
             }
-            
-            strcpy(data->genre, content);
-        }
-        else if(strcmp(frame_id, "COMM") == 0){
-            data->comment = (char *)calloc(1, strlen(content));
-            if(!data->comment){
-                perror("Memory allocation failed");
-                return NULL;
+            else if(strcmp(frame_id, "COMM") == 0){
+                data->comment = (char *)calloc(1, strlen(content));
+                if(!data->comment){
+                    perror("Memory allocation failed");
+                    return NULL;
+                }
+                
+                strcpy(data->comment, content);
             }
-            
-            strcpy(data->comment, content);
         }
-        // else if(strcmp(frame_id, "APIC") == 0){
-        //     printf("%s\n", content);
-        // }
 
         // Deduct total size of frame (header + content)
         remaining_frames = remaining_frames - (frame_size + FRAME_HEADER_SIZE);
@@ -169,21 +168,25 @@ TagData *read_id3_tag(FILE *file, unsigned int *tag_size){
 }
 
 /**
- * @brief Displays the MP3 metadata
+ * @brief Displays the MP3 details
  */
 void display_metadata(const HeaderData *header_data, const TagData *data) {
-    printf("Version is 2.%hhx.%hhx\n", header_data->version[0], header_data->version[1]);
-    printf("Title: %s\n", data->title);
-    printf("Artist: %s\n", data->artist);
-    printf("Album: %s\n", data->album);
-    printf("Track Number: %s\n", data->track);
-    printf("Year: %s\n", data->year);
-    printf("Genre: %s\n", data->genre);
-    printf("Comment: %s\n", data->comment);
+    printf("----------------------------------------------------\n");
+    printf("       MP3 Tag Reader and Editor for ID3v2.%hhx.%hhx\n", header_data->version[0], header_data->version[1]);
+    printf("----------------------------------------------------\n");
+
+    printf("Title\t:\t%s\n", data->title);
+    printf("Artist\t:\t%s\n", data->artist);
+    printf("Album\t:\t%s\n", data->album);
+    printf("Year\t:\t%s\n", data->year);
+    printf("Genre\t:\t%s\n", data->genre);
+    printf("Comment\t:\t%s\n", data->comment);
+
+    printf("----------------------------------------------------\n");
 }
 
 /**
-TODO: Add documention as sample given
+ * @brief View the MP3 tag
  */
 void view_tags(const char *filename){
     FILE *file = fopen(filename, "rb");

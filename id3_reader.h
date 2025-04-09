@@ -5,22 +5,24 @@
 #include "id3_utils.h"
 
 /**
-TODO: Add documention as sample given
+ * @brief Reads the ID3 tags from the MP3 file
+ * @return HeaderData Structure
  */
 HeaderData *read_id3_header(FILE *, unsigned int *);
 
 /**
-TODO: Add documention as sample given
+ * @brief Reads the ID3 tags from the MP3 file
+ * @return TagData Structure
  */
 TagData *read_id3_tag(FILE *, unsigned int *);
 
 /**
-TODO: Add documention as sample given 
+ * @brief Displays the MP3 details
  */
 void display_metadata(const HeaderData *, const TagData *);
 
 /**
-TODO: Add documention as sample given
+ * @brief View the MP3 tag
  */
 void view_tags(const char *);
 
