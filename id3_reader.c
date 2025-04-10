@@ -83,7 +83,13 @@ TagData *read_id3_tag(FILE *file, unsigned int *tag_size){
         }
 
         if(strcmp(frame_id, "APIC") == 0){
-            extract_album_art(file, frame_size);
+            data->album_art = (char *)calloc(1, strlen(content));
+            if(!data->album_art){
+                perror("Memory allocation failed");
+                return NULL;
+            }
+            
+            extract_album_art(file, frame_size, data->album_art);
         }
         else{
             //Skipping the text encoding byte(which is the first byte) in the frame content
@@ -183,6 +189,8 @@ void display_metadata(const HeaderData *header_data, const TagData *data) {
     printf("Comment\t:\t%s\n", data->comment);
 
     printf("----------------------------------------------------\n");
+
+    printf("Album art saved as: \033[0;34m%s\033[0m\n", data->album_art);
 }
 
 /**

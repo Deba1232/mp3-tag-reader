@@ -6,6 +6,6 @@
 /**
  * @brief Extracts the album art from the MP3 file
  */
-void extract_album_art(FILE *, unsigned int);
+void extract_album_art(FILE *, unsigned int, char *);
 
 #endif

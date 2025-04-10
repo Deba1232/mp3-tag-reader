@@ -1,8 +1,9 @@
 #include "main.h"
+#include "id3_utils.h"
 #include "album_art.h"
 #include "error_handling.h"
 
-void extract_album_art(FILE *file, unsigned int frame_size){
+void extract_album_art(FILE *file, unsigned int frame_size, char *img_file_name){
     // Allocate memory to store the APIC frame content
     char *apic_content = (char *)calloc(1, frame_size);
     if (!apic_content) {
@@ -45,7 +46,6 @@ void extract_album_art(FILE *file, unsigned int frame_size){
 
     char *extension = strcmp(image_format, "image/png") ? "jpg" : "png";
 
-    char img_file_name[50];
     sprintf(img_file_name, "album_art.%s", extension);
     
     // Write the image data to the file
@@ -56,8 +56,6 @@ void extract_album_art(FILE *file, unsigned int frame_size){
     }
 
     fwrite(&apic_content[idx], frame_size - idx, 1, img_file);
-
-    printf("Album art saved as: \033[0;34m%s\033[0m\n\n", img_file_name);
 
     fclose(img_file);
     free(apic_content);

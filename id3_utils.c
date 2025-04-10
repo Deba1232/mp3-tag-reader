@@ -64,6 +64,7 @@ TagData* create_tag_data() {
         data->year = NULL;
         data->comment = NULL;
         data->genre = NULL;
+        data->album_art = NULL;
     }
     return data;
 }
@@ -90,6 +91,7 @@ void free_tag_data(TagData *data) {
         free(data->year);
         free(data->comment);
         free(data->genre);
+        free(data->album_art);
         
         free(data);
     }
